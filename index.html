@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Math Worksheet</title>
+<style>
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+  }
+  .worksheet {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+    width: 700px;
+    position: relative;
+    border: 1px solid #ddd;
+  }
+  .button {
+    margin: 10px 0;
+    padding: 10px 20px;
+    background-color: #5cb85c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .button:disabled {
+    background-color: #ccc;
+  }
+  .hidden {
+    display: none;
+  }
+  .problem-image {
+    width: 100%;
+    height: 300px; /* Increased height for better visualization */
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #999;
+  }
+  .arrow {
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    background-color: #007bff;
+    clip-path: polygon(100% 50%, 75% 75%, 75% 60%, 0 60%, 0 40%, 75% 40%, 75% 25%);
+    cursor: pointer;
+  }
+  .frame {
+    width: 100%;
+    height: 300px;
+    margin: 10px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+  }
+  .steps {
+    font-size: 18px;
+    line-height: 1.6;
+    margin: 10px 0;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .step {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center.
+  }
+  .cross-out {
+    text-decoration: line-through;
+    color: red;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .header-title {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  .header-step {
+    font-size: 18px;
+    background-color: #5cb85c;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+  }
+</style>
+</head>
+<body>
+
+<div class="worksheet">
+  <div class="header">
+    <div class="header-title">확인</div>
+    <div class="header-step" id="stepNumber">1</div>
+  </div>
+  <div id="problem"></div>
+  <div class="frame">
+    <img id="problemImage" class="problem-image" src="" alt="Problem Image">
+  </div>
+  <button class="button" id="stepsButton">식</button>
+  <div id="steps" class="hidden"></div>
+  <button class="button" id="answerButton">답</button>
+  <div id="answer" class="hidden"></div>
+  <div class="arrow" id="nextButton"></div>
+</div>
+
+<script>
+  const problems = [
+    {
+      question: "가게에서 사과 50개 중 20개를 팔았습니다. 남은 사과는 몇 개인가요?",
+      steps: `
+        <div class="step"><span>50</span></div>
+        <div class="step"><span> - 20</span></div>
+        <div class="step"><span> ----</span></div>
+        <div class="step"><span>  30</span></div>
+      `,
+      answer: "30 개",
+      image: "image_1.webp"
+    },
+    {
+      question: "김 선생님은 학생 24명에게 각자 3권씩 공책을 주었습니다. 총 몇 권의 공책이 필요한가요?",
+      steps: `
+        <div class="step"><span>24 x 3</span></div>
+        <div class="step"><span> ----</span></div>
+        <div class="step"><span>  72</span></div>
+      `,
+      answer: "72 권",
+      image: "image_2.webp"
+    },
+    {
+      question: "여행에서 500km를 운전했습니다. 하루에 125km씩 운전했다면, 며칠이 걸렸나요?",
+      steps: `
+        <div class="step"><span>500 ÷ 125</span></div>
+        <div class="step"><span> ------</span></div>
+        <div class="step"><span>   4</span></div>
+      `,
+      answer: "4 일",
+      image: "image_3.webp"
+    },
+    {
+      question: "한 상자에 12개의 컵이 들어 있습니다. 8개의 상자가 있다면, 총 몇 개의 컵이 있나요?",
+      steps: `
+        <div class="step"><span>12 x 8</span></div>
+        <div class="step"><span> ----</span></div>
+        <div class="step"><span>  96</span></div>
+      `,
+      answer: "96 개",
+      image: "image_4.webp"
+    }
+  ];
+
+  let currentProblemIndex = 0;
+
+  const problemElement = document.getElementById('problem');
+  const problemImage = document.getElementById('problemImage');
+  const stepsButton = document.getElementById('stepsButton');
+  const stepsElement = document.getElementById('steps');
+  const answerButton = document.getElementById('answerButton');
+  const answerElement = document.getElementById('answer');
+  const nextButton = document.getElementById('nextButton');
+  const stepNumber = document.getElementById('stepNumber');
+
+  function loadProblem() {
+    const problem = problems[currentProblemIndex];
+    problemElement.innerText = problem.question;
+    stepsElement.innerHTML = problem.steps;
+    answerElement.innerText = problem.answer;
+    problemImage.src = problem.image; // Set the image source for each question
+
+    stepNumber.innerText = currentProblemIndex + 1;
+    stepsElement.classList.add('hidden');
+    answerElement.classList.add('hidden');
+  }
+
+  stepsButton.addEventListener('click', () => {
+    stepsElement.classList.toggle('hidden');
+  });
+
+  answerButton.addEventListener('click', () => {
+    answerElement.classList.toggle('hidden');
+  });
+
+  nextButton.addEventListener('click', () => {
+    currentProblemIndex = (currentProblemIndex + 1) % problems.length;
+    loadProblem();
+  });
+
+  loadProblem();
+</script>
+
+</body>
+</html>
